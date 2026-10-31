@@ -1,0 +1,14 @@
+{
+  "name": "talks",
+  "private": true,
+  "description": "竹内 尊紀 の登壇資料（GitHub Pages で公開）",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test tools/live-sync/*.test.mjs",
+    "verify": "node --check tools/live-sync/live-sync.js && npm test",
+    "publish:deck": "scripts/publish.sh"
+  }
+}

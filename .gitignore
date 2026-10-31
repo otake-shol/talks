@@ -1,0 +1,4 @@
+node_modules/
+.DS_Store
+# 発表者用（ノート付き）。公開しない
+*.local.html
