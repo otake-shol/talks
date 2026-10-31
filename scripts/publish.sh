@@ -5,6 +5,7 @@
 #   <slug> は slides リポジトリの slides/<slug>/deck.md のフォルダ名
 #
 # - slides/<slug>/public.sed があれば、公開前にその置換をかける（消したい記述は非公開側に置く）
+# - slides/<slug>/glossary.md があれば、聴衆向けの用語解説を付ける
 # - 発表者ノートは除く。参照している画像だけをコピーする
 # - 発表者用にノート付きの <slug>/presenter.local.html も作る（.gitignore 済み・公開しない）
 set -euo pipefail
@@ -35,8 +36,10 @@ main() {
     "$tmp_md" -o "$tmp_html"
 
   rm -rf "${root:?}/$slug"
+  local extra=()
+  [[ -f "$deck_dir/glossary.md" ]] && extra=(--glossary "$deck_dir/glossary.md")
   node "$root/tools/live-sync/inject.mjs" "$tmp_html" --url "$url" --out "$root/$slug/index.html" \
-    --strip-notes --copy-assets
+    --strip-notes --copy-assets "${extra[@]}"
 
   # 発表者用（ノート付き・ローカル専用）。トピックは公開版と同じなので聴衆と同期する
   cp "$deck_dir/deck.md" "$tmp_md"

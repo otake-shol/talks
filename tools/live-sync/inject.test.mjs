@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { injectBeforeBodyEnd, listLocalAssets, stripNotes, topicFromUrl } from "./inject.mjs";
+import { injectBeforeBodyEnd, listLocalAssets, parseGlossary, stripNotes, topicFromUrl } from "./inject.mjs";
 
 test("topicFromUrl: 同じURLなら同じトピック、違うURLなら別のトピック", () => {
   const a = topicFromUrl("https://example.com/a/");
@@ -40,4 +40,16 @@ test("listLocalAssets: 相対パスの画像だけを重複なしで返す", () 
     '<img src="assets/a.png"><img src="assets/a.png"><img src="assets/b%20c.png?v=1">' +
     '<a href="https://example.com"></a><a href="#3"></a><img src="data:image/png;base64,xx"><img src="/abs.png">';
   assert.deepEqual(listLocalAssets(html), ["assets/a.png", "assets/b c.png"]);
+});
+
+test("parseGlossary: 見出しを用語と別名、次の見出しまでを解説として読む", () => {
+  const md = "# 用語集\n\nメモ\n\n## effort | エフォート\nどれだけ考えるか\nを決める設定。\n\n## CLI\n文字で操作する画面。\n";
+  assert.deepEqual(parseGlossary(md), [
+    { term: "effort", aliases: ["エフォート"], desc: "どれだけ考えるかを決める設定。" },
+    { term: "CLI", aliases: [], desc: "文字で操作する画面。" },
+  ]);
+});
+
+test("parseGlossary: 解説のない用語はエラー", () => {
+  assert.throws(() => parseGlossary("## effort\n\n## CLI\n説明"), /effort/);
 });

@@ -15,12 +15,29 @@ Marp で出力した `deck.html` に、発表者のページ位置を聴衆の�
 - 聴衆が自分でページを戻すと追従を止め、「発表中のN枚目へ戻る」ボタンを出す
 - 2分以上位置が届かなければ「発表中ではない」とみなし、普通のスライドとして見られる
 
+## 用語解説（glossary.js）
+
+`--glossary <glossary.md>` を渡すと、聴衆の画面に用語解説が付く。
+
+- 今のページに出てくる用語に点線の下線を引く（同じ用語はページで最初の1回だけ）
+- 右上の「用語 N」ボタンか下線をタップすると、解説が下から出る。「すべての用語」タブで全体も見られる
+- 発表者モードとスクリーンには出さない
+- 英数字の用語は単語の途中では当てない（`max` が `maximum` に当たらない）。大文字小文字は区別しない
+
+```markdown
+## effort | エフォート
+Claude が答える前にどれだけ考えるかを決める設定。
+
+## ターミナル | CLI
+文字を打ち込んでパソコンを操作する画面。
+```
+
 ## 使い方
 
 通常は `scripts/publish.sh <slug>` から呼ぶ（ルートの README を参照）。単体で使う場合:
 
 ```bash
-node tools/live-sync/inject.mjs <deck.html> --url <公開URL> [--out <出力先>] [--strip-notes] [--copy-assets]
+node tools/live-sync/inject.mjs <deck.html> --url <公開URL> [--out <出力先>] [--strip-notes] [--copy-assets] [--glossary <glossary.md>]
 ```
 
 - 出力の既定はデッキと同じフォルダの `index.html`。QR コードを `qr.svg` としても書き出す

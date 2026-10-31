@@ -4,10 +4,11 @@
  *
  * 使い方:
  *   node tools/live-sync/inject.mjs <deck.html> --url <公開URL> [--out <出力先>] [--topic <ntfyトピック>]
- *                                   [--strip-notes] [--copy-assets]
+ *                                   [--strip-notes] [--copy-assets] [--glossary <glossary.md>]
  *
  * - --strip-notes: 発表者ノートを HTML から除く（公開用。ノートには非公開の話が入りうる）
  * - --copy-assets: HTML が参照しているローカル画像だけを出力先へコピーする（使っていない原画像を出さない）
+ * - --glossary: 聴衆向けの用語解説（glossary.js）を足す。書式は parseGlossary を参照
  *
  * - 出力は1ファイルで完結する HTML（既定は deck.html と同じフォルダの index.html。画像の相対パスを保つため同じフォルダに出す）
  * - QR コード画像は同じフォルダに qr.svg としても書き出す（スライド本文に貼りたいとき用）
@@ -74,6 +75,36 @@ export function listLocalAssets(html) {
 }
 
 /**
+ * 用語集の Markdown を読む。書式:
+ *
+ *   ## 用語 | 別名 | 別名
+ *   解説（次の見出しまで。改行はつなげる）
+ *
+ * 最初の「## 」より前と、「# 」の題名行は無視する。
+ * @param {string} markdown
+ * @returns {{ term: string, aliases: string[], desc: string }[]}
+ */
+export function parseGlossary(markdown) {
+  const entries = [];
+  let current = null;
+  for (const raw of markdown.split(/\r?\n/)) {
+    const line = raw.trim();
+    const heading = line.match(/^##\s+(.+)$/);
+    if (heading) {
+      const [term, ...aliases] = heading[1].split("|").map((s) => s.trim()).filter(Boolean);
+      current = { term, aliases, lines: [] };
+      entries.push(current);
+    } else if (current && line && !line.startsWith("#")) {
+      current.lines.push(line);
+    }
+  }
+  return entries.map(({ term, aliases, lines }) => {
+    if (lines.length === 0) throw new Error(`用語「${term}」に解説がありません`);
+    return { term, aliases, desc: lines.join("") };
+  });
+}
+
+/**
  * qrcode パッケージの CLI で QR コードの SVG を作る（依存を package.json に足さないため npx 経由）。
  * @param {string} text
  * @returns {string}
@@ -100,6 +131,7 @@ function main() {
       topic: { type: "string" },
       "strip-notes": { type: "boolean", default: false },
       "copy-assets": { type: "boolean", default: false },
+      glossary: { type: "string" },
     },
   });
   const [input] = positionals;
@@ -116,7 +148,14 @@ function main() {
 
   // </script> を含む文字列で script 要素が途切れないようにエスケープする
   const json = JSON.stringify(config).replace(/</g, "\\u003c");
-  const snippet = `<script>window.LIVE_SYNC=${json};</script><script>${runtime}</script>`;
+  let snippet = `<script>window.LIVE_SYNC=${json};</script><script>${runtime}</script>`;
+  if (values.glossary) {
+    const entries = parseGlossary(readFileSync(values.glossary, "utf8"));
+    const glossaryJs = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "glossary.js"), "utf8");
+    const glossaryJson = JSON.stringify(entries).replace(/</g, "\\u003c");
+    snippet += `<script>window.SLIDE_GLOSSARY=${glossaryJson};</script><script>${glossaryJs}</script>`;
+    console.log(`用語集: ${entries.length}語`);
+  }
   let source = readFileSync(input, "utf8");
   if (values["strip-notes"]) source = stripNotes(source);
   const html = injectBeforeBodyEnd(source, snippet);
