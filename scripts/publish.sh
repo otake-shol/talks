@@ -13,7 +13,7 @@ set -euo pipefail
 # テーマごとの Web フォント（Google Fonts）。太さはテーマの CSS で使っているものだけ読む
 theme_font_css() {
   case "$1" in
-  story-slides)
+  story-slides | story-slides-warm)
     echo "https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Plus+Jakarta+Sans:wght@500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap"
     ;;
   *) echo "" ;;
@@ -54,7 +54,7 @@ main() {
   if [[ -n "$font_css" ]]; then
     extra+=(--font-css "$font_css")
   else
-    echo "注意: テーマ「$theme」の Web フォントが未設定です（scripts/publish.sh の theme_font_css に追加）" >&2
+    echo "注意: テーマ「${theme}」の Web フォントが未設定です（scripts/publish.sh の theme_font_css に追加）" >&2
   fi
   node "$root/tools/live-sync/inject.mjs" "$tmp_html" --url "$url" --out "$root/$slug/index.html" \
     --strip-notes --copy-assets "${extra[@]}"
