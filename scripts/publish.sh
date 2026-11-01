@@ -10,6 +10,16 @@
 # - 発表者用にノート付きの <slug>/presenter.local.html も作る（.gitignore 済み・公開しない）
 set -euo pipefail
 
+# テーマごとの Web フォント（Google Fonts）。太さはテーマの CSS で使っているものだけ読む
+theme_font_css() {
+  case "$1" in
+  story-slides)
+    echo "https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Plus+Jakarta+Sans:wght@500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap"
+    ;;
+  *) echo "" ;;
+  esac
+}
+
 main() {
   local slug="${1:?使い方: scripts/publish.sh <slug>}"
   local root slides_repo deck_dir url tmp_md tmp_html
@@ -36,8 +46,16 @@ main() {
     "$tmp_md" -o "$tmp_html"
 
   rm -rf "${root:?}/$slug"
-  local extra=()
-  [[ -f "$deck_dir/glossary.md" ]] && extra=(--glossary "$deck_dir/glossary.md")
+  local extra=() theme font_css
+  [[ -f "$deck_dir/glossary.md" ]] && extra+=(--glossary "$deck_dir/glossary.md")
+  # テーマの書体は発表者の Mac にしか入っていないので、聴衆の端末向けに Web フォントを読み込む
+  theme="$(sed -n 's/^theme:[[:space:]]*//p' "$deck_dir/deck.md" | head -n 1)"
+  font_css="$(theme_font_css "$theme")"
+  if [[ -n "$font_css" ]]; then
+    extra+=(--font-css "$font_css")
+  else
+    echo "注意: テーマ「$theme」の Web フォントが未設定です（scripts/publish.sh の theme_font_css に追加）" >&2
+  fi
   node "$root/tools/live-sync/inject.mjs" "$tmp_html" --url "$url" --out "$root/$slug/index.html" \
     --strip-notes --copy-assets "${extra[@]}"
 

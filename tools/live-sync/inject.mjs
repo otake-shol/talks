@@ -4,11 +4,12 @@
  *
  * 使い方:
  *   node tools/live-sync/inject.mjs <deck.html> --url <公開URL> [--out <出力先>] [--topic <ntfyトピック>]
- *                                   [--strip-notes] [--copy-assets] [--glossary <glossary.md>]
+ *                                   [--strip-notes] [--copy-assets] [--glossary <glossary.md>] [--font-css <URL>]
  *
  * - --strip-notes: 発表者ノートを HTML から除く（公開用。ノートには非公開の話が入りうる）
  * - --copy-assets: HTML が参照しているローカル画像だけを出力先へコピーする（使っていない原画像を出さない）
  * - --glossary: 聴衆向けの用語解説（glossary.js）を足す。書式は parseGlossary を参照
+ * - --font-css: Web フォントの CSS（Google Fonts など）を読み込む。テーマの書体を入れていない端末でも同じ見た目にする
  *
  * - 出力は1ファイルで完結する HTML（既定は deck.html と同じフォルダの index.html。画像の相対パスを保つため同じフォルダに出す）
  * - QR コード画像は同じフォルダに qr.svg としても書き出す（スライド本文に貼りたいとき用）
@@ -46,6 +47,35 @@ export function injectBeforeBodyEnd(html, snippet) {
   const index = html.lastIndexOf("</body>");
   if (index === -1) throw new Error("</body> が見つかりません。Marp の HTML 出力を指定してください");
   return html.slice(0, index) + marked + html.slice(index);
+}
+
+/**
+ * HTML の </head> 直前に要素を差し込む。既に差し込み済みなら置き換える。
+ * @param {string} html
+ * @param {string} snippet
+ * @returns {string}
+ */
+export function injectBeforeHeadEnd(html, snippet) {
+  const marked = `<!-- live-sync-head:start -->${snippet}<!-- live-sync-head:end -->`;
+  const existing = /<!-- live-sync-head:start -->[\s\S]*?<!-- live-sync-head:end -->/;
+  if (existing.test(html)) return html.replace(existing, () => marked);
+  const index = html.indexOf("</head>");
+  if (index === -1) throw new Error("</head> が見つかりません。Marp の HTML 出力を指定してください");
+  return html.slice(0, index) + marked + html.slice(index);
+}
+
+/**
+ * Web フォントの CSS を読み込む link 要素を作る。
+ * @param {string} url
+ * @returns {string}
+ */
+export function fontLinks(url) {
+  const { origin } = new URL(url);
+  const escaped = url.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+  const links = [`<link rel="preconnect" href="${origin}">`];
+  if (origin === "https://fonts.googleapis.com") links.push('<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>');
+  links.push(`<link rel="stylesheet" href="${escaped}">`);
+  return links.join("");
 }
 
 /**
@@ -132,6 +162,7 @@ function main() {
       "strip-notes": { type: "boolean", default: false },
       "copy-assets": { type: "boolean", default: false },
       glossary: { type: "string" },
+      "font-css": { type: "string" },
     },
   });
   const [input] = positionals;
@@ -158,7 +189,8 @@ function main() {
   }
   let source = readFileSync(input, "utf8");
   if (values["strip-notes"]) source = stripNotes(source);
-  const html = injectBeforeBodyEnd(source, snippet);
+  let html = injectBeforeBodyEnd(source, snippet);
+  if (values["font-css"]) html = injectBeforeHeadEnd(html, fontLinks(values["font-css"]));
 
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, html);

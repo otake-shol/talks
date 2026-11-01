@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { injectBeforeBodyEnd, listLocalAssets, parseGlossary, stripNotes, topicFromUrl } from "./inject.mjs";
+import {
+  fontLinks,
+  injectBeforeBodyEnd,
+  injectBeforeHeadEnd,
+  listLocalAssets,
+  parseGlossary,
+  stripNotes,
+  topicFromUrl,
+} from "./inject.mjs";
 
 test("topicFromUrl: 同じURLなら同じトピック、違うURLなら別のトピック", () => {
   const a = topicFromUrl("https://example.com/a/");
@@ -52,4 +60,16 @@ test("parseGlossary: 見出しを用語と別名、次の見出しまでを解�
 
 test("parseGlossary: 解説のない用語はエラー", () => {
   assert.throws(() => parseGlossary("## effort\n\n## CLI\n説明"), /effort/);
+});
+
+test("injectBeforeHeadEnd: </head> の直前に差し込み、2回目は置き換える", () => {
+  const once = injectBeforeHeadEnd("<head><title>t</title></head><body></body>", "<link a>");
+  assert.equal(once, "<head><title>t</title><!-- live-sync-head:start --><link a><!-- live-sync-head:end --></head><body></body>");
+  assert.equal(injectBeforeHeadEnd(once, "<link b>").match(/<link/g).length, 1);
+});
+
+test("fontLinks: Google Fonts は gstatic にも事前接続し、& をエスケープする", () => {
+  const html = fontLinks("https://fonts.googleapis.com/css2?family=A&family=B&display=swap");
+  assert.match(html, /href="https:\/\/fonts.gstatic.com" crossorigin/);
+  assert.match(html, /family=A&amp;family=B&amp;display=swap/);
 });

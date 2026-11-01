@@ -74,21 +74,32 @@
   const termsByPage = slides.map(markTerms);
 
   const style = document.createElement("style");
+  // スライドのテーマ（story-slides）と同じ書体・配色にそろえる。書体は publish.sh が Web フォントで読み込む
   style.textContent = `
-    .ls-term{text-decoration:underline dotted;text-decoration-thickness:.08em;text-underline-offset:.18em;cursor:pointer}
-    .ls-gl-btn{position:fixed;right:12px;top:12px;z-index:2147483000;font:700 13px/1 system-ui,-apple-system,sans-serif;
-      color:#fff;background:rgba(20,20,20,.72);border:0;padding:9px 13px;border-radius:999px;backdrop-filter:blur(6px);cursor:pointer}
-    .ls-gl-sheet{position:fixed;left:0;right:0;bottom:0;z-index:2147483003;max-height:60vh;overflow:auto;
-      background:#fff;color:#111;border-radius:16px 16px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.25);
-      padding:8px 20px 24px;font:15px/1.65 system-ui,-apple-system,"Hiragino Sans",sans-serif}
-    .ls-gl-head{position:sticky;top:0;display:flex;gap:8px;align-items:center;background:#fff;padding:10px 0}
-    .ls-gl-tab{border:1px solid #d1d5db;background:#fff;color:#374151;border-radius:999px;padding:6px 12px;font:600 13px/1 inherit;cursor:pointer}
-    .ls-gl-tab[aria-pressed="true"]{background:#111;border-color:#111;color:#fff}
-    .ls-gl-close{margin-left:auto;border:0;background:none;font-size:22px;line-height:1;color:#6b7280;cursor:pointer}
+    .ls-term{text-decoration:underline dotted #2c63b4;text-decoration-thickness:.09em;text-underline-offset:.2em;cursor:pointer}
+    .ls-gl-btn{position:fixed;right:12px;top:12px;z-index:2147483000;
+      font:700 13px/1 "Zen Maru Gothic","Noto Sans JP","Hiragino Sans",sans-serif;letter-spacing:.04em;
+      color:#fff;background:rgba(18,56,88,.82);border:0;padding:9px 14px;border-radius:999px;backdrop-filter:blur(6px);cursor:pointer}
+    .ls-gl-sheet{position:fixed;left:0;right:0;bottom:0;z-index:2147483003;max-height:62vh;overflow:auto;
+      background:#faf8f3;color:#17202a;border-radius:20px 20px 0 0;box-shadow:0 -10px 32px rgba(18,56,88,.22);
+      padding:0 22px calc(28px + env(safe-area-inset-bottom));
+      font:400 15px/1.85 "Noto Sans JP","Hiragino Sans",sans-serif;letter-spacing:.02em;
+      font-feature-settings:"palt" 0;-webkit-font-smoothing:antialiased;text-wrap:pretty;word-break:auto-phrase}
+    .ls-gl-head{position:sticky;top:0;display:flex;gap:8px;align-items:center;background:#faf8f3;padding:18px 0 12px;
+      border-bottom:1px solid #d5dde6}
+    .ls-gl-head::before{content:"";position:absolute;left:50%;top:7px;width:40px;height:4px;margin-left:-20px;
+      border-radius:2px;background:#d5dde6}
+    .ls-gl-tab{border:1px solid #d5dde6;background:#fff;color:#65717e;border-radius:999px;padding:7px 14px;
+      font:700 13px/1 "Zen Maru Gothic","Noto Sans JP",sans-serif;letter-spacing:.04em;cursor:pointer}
+    .ls-gl-tab[aria-pressed="true"]{background:#2c63b4;border-color:#2c63b4;color:#fff}
+    .ls-gl-close{margin-left:auto;border:0;background:none;font:400 24px/1 sans-serif;color:#65717e;cursor:pointer;padding:4px}
     .ls-gl-sheet dl{margin:0}
-    .ls-gl-sheet dt{font-weight:700;margin-top:14px}
-    .ls-gl-sheet dd{margin:2px 0 0;color:#374151}
-    .ls-gl-sheet .ls-gl-hit{background:#fef3c7;border-radius:6px;padding:0 4px;margin-left:-4px}
+    .ls-gl-sheet dt{margin-top:18px;font:700 17px/1.4 "Zen Maru Gothic","Noto Sans JP",sans-serif;color:#123858;letter-spacing:.03em}
+    .ls-gl-sheet dt::before{content:"";display:inline-block;width:4px;height:.95em;margin-right:8px;
+      vertical-align:-.1em;border-radius:2px;background:#2c63b4}
+    .ls-gl-sheet dd{margin:6px 0 0;padding-bottom:16px;border-bottom:1px solid #e7ebf0;color:#17202a}
+    .ls-gl-sheet dd:last-child{border-bottom:0}
+    .ls-gl-sheet .ls-gl-hit{background:linear-gradient(transparent 55%,#fbece7 55%);padding:0 2px}
   `;
   document.head.appendChild(style);
 
